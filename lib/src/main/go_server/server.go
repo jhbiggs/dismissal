@@ -38,6 +38,10 @@ func main() {
 	//Initialize request router
 ginRouter := gin.Default()
 ginRouter.GET("/buses", func (ctx *gin.Context) { database_service.GetBuses(ctx) })
+// ginRouter.POST("/buses", func (ctx *gin.Context) { database_service.AddBus(ctx) })
+// ginRouter.GET("/teachers", func (ctx *gin.Context) { database_service.GetTeachers(ctx) })
+// ginRouter.POST("/teachers", func (ctx *gin.Context) { database_service.AddTeacher(ctx) })
+ginRouter.PUT("/buses/:id/toggleBusArrivalStatus", func (ctx *gin.Context) { database_service.ToggleBusArrivalStatus(ctx) })
 
 	
 	ctx, cancelCtx := context.WithCancel(context.Background())

@@ -14,27 +14,37 @@ class BusListView extends StatefulWidget {
 }
 
 class _BusListViewState extends State<BusListView> {
+
+  // load the list of buses from the global constant "buses"
   final List<Bus> items = buses;
   final List<bool> _selected =
-      List.generate(buses.length, (i) => false); // Fill it with false initially
+      List.generate(buses.length, (i) => buses.elementAt(i).arrived); // Fill it with false initially
+
+  void loadBuses() async {
+    var busListFromDB = await fetchBuses();
+    setState(() {
+      items.clear();
+      items.addAll(busListFromDB);
+    });
+  }  
 
   @override
   void initState() {
     super.initState();
-    fetchBuses();
+    loadBuses();
     _loadListState();
   }
 
   void _loadListState() async {
-    // Load the initial state of the list with either checked or unchecked
-    // items.
-    final prefs = await SharedPreferences.getInstance();
-    for (int i = 0; i < items.length; i++) {
-      _selected[i] = prefs.getBool('Bus$i') ?? false;
-    }
-    setState(() {
-      // Rebuild the list view with the saved state.
-    });
+    // // Load the initial state of the list with either checked or unchecked
+    // // items.
+    // final prefs = await SharedPreferences.getInstance();
+    // for (int i = 0; i < items.length; i++) {
+    //   _selected[i] = prefs.getBool('Bus$i') ?? false;
+    // }
+    // setState(() {
+    //   // Rebuild the list view with the saved state.
+    // });
   }
 
   @override
@@ -68,8 +78,14 @@ class _BusListViewState extends State<BusListView> {
                 ),
               ),
               onTap: () {
-                setState(() {
-                  _selected[index] = !_selected[index];
+                  
+                  setState(() {
+                    item.arrived = !item.arrived;
+                    updateBus(item).then((value) {
+                      loadBuses();
+                      _selected[index] = !_selected[index];
+                  
+                  });
                 });
                 // Save the state of the list item.
                 SharedPreferences.getInstance().then((prefs) {

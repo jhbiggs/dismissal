@@ -58,3 +58,14 @@ func GetBuses(ctx *gin.Context) {
 	})
 
 }
+
+func ToggleBusArrivalStatus(ctx *gin.Context) {
+	fmt.Println("updateBusStatus called")
+
+	busid := ctx.Param("id")
+	_, err := DB.Exec("UPDATE dismissal_schema.buses SET arrived = NOT arrived WHERE busid = $1", busid)
+
+	if err != nil {
+		panic(err)
+	}
+}

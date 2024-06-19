@@ -4,6 +4,7 @@ type Teacher struct {
 	TeacherID int `json:"teacher_id"`
 	Name string `json:"name"`
 	Grade string `json:"grade"`
+	Arrived bool `json:"arrived"`
 }
 
 func NewTeacher(teacherID int, name string, grade string) *Teacher {

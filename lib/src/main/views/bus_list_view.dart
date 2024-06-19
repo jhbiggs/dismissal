@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bus/src/main/flutter_objects/bus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_bus/src/main/flutter_objects/constants.dart';
 import 'package:flutter_bus/src/main/flutter_db_service/flutter_db_service.dart';
 
 class BusListView extends StatefulWidget {
@@ -14,37 +13,22 @@ class BusListView extends StatefulWidget {
 }
 
 class _BusListViewState extends State<BusListView> {
-
-  // load the list of buses from the global constant "buses"
-  final List<Bus> items = buses;
-  final List<bool> _selected =
-      List.generate(buses.length, (i) => buses.elementAt(i).arrived); // Fill it with false initially
+  // create a blank list of buses and a list of selected items
+   List<Bus> items = [];
+   List<bool> _selected = [];
 
   void loadBuses() async {
-    var busListFromDB = await fetchBuses();
+    items = await fetchBuses();
+
     setState(() {
-      items.clear();
-      items.addAll(busListFromDB);
+      _selected = List<bool>.from(items.map((e) => e.arrived));
     });
-  }  
+  }
 
   @override
   void initState() {
     super.initState();
     loadBuses();
-    _loadListState();
-  }
-
-  void _loadListState() async {
-    // // Load the initial state of the list with either checked or unchecked
-    // // items.
-    // final prefs = await SharedPreferences.getInstance();
-    // for (int i = 0; i < items.length; i++) {
-    //   _selected[i] = prefs.getBool('Bus$i') ?? false;
-    // }
-    // setState(() {
-    //   // Rebuild the list view with the saved state.
-    // });
   }
 
   @override
@@ -78,13 +62,11 @@ class _BusListViewState extends State<BusListView> {
                 ),
               ),
               onTap: () {
-                  
-                  setState(() {
-                    item.arrived = !item.arrived;
-                    updateBus(item).then((value) {
-                      loadBuses();
-                      _selected[index] = !_selected[index];
-                  
+                setState(() {
+                  item.arrived = !item.arrived;
+                  updateBus(item).then((value) {
+                    loadBuses();
+                    _selected[index] = !_selected[index];
                   });
                 });
                 // Save the state of the list item.

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bus/src/main/flutter_db_service/flutter_db_service.dart';
 
 import '../flutter_objects/teacher.dart';
-import 'package:flutter_bus/src/main/flutter_objects/constants.dart';
 
 class TeacherListView extends StatefulWidget {
   static const routeName = '/teacher_list_view';
@@ -14,27 +13,24 @@ class TeacherListView extends StatefulWidget {
 }
 
 class _TeacherListViewState extends State<TeacherListView> {
-  @override
-  void initState() {
-    super.initState();
-    _loadListState();
-  }
+  // create a blank list of teachers and a list of selected items
+  List<Teacher> items = [];
+  List<bool> _selected = [];
 
-  void _loadListState() async {
-    // Load the initial state of the list with either checked or unchecked
-    // items.
-    final prefs =  await SharedPreferences.getInstance();
-    for (int i = 0; i < teachers.length; i++) {
-      _selected[i] = prefs.getBool('Teacher$i') ?? false;
-    }
+  void loadTeachers() async {
+    items = await fetchTeachers();
+
     setState(() {
-      // Rebuild the list view with the saved state.
-      
+      _selected = List<bool>.from(items.map((e) => e.arrived));
     });
   }
 
-  final List<Teacher> items = teachers;
-  final List<bool> _selected = List<bool>.filled(teachers.length, false);
+  @override
+  void initState() {
+    super.initState();
+    loadTeachers();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,10 +58,10 @@ class _TeacherListViewState extends State<TeacherListView> {
               ),
               onTap: () {
                 setState(() {
-                  _selected[index] = !_selected[index];
-                  // Save the state of the list item.
-                  SharedPreferences.getInstance().then((prefs) {
-                    prefs.setBool('Teacher$index', _selected[index]);
+                  item.arrived = !item.arrived;
+                  updateTeacher(item).then((value) {
+                    loadTeachers();
+                    _selected[index] = !_selected[index];
                   });
                 });
               });

@@ -1,9 +1,37 @@
 /// A placeholder class that represents an entity or model.
 class Teacher {
-  const Teacher(this.id, this.name, this.grade);
+  
+  final int id;
   final String name;
   final String grade;
-  
+  bool arrived = false;
 
-  final int id;
+  Teacher(this.id, this.name, this.grade, this.arrived);
+
+  /// The factory constructor is used to create a new
+  ///  instance of the teacher class from a JSON (map) object.
+  factory Teacher.fromJson(Map<String, dynamic> json) {
+    try {
+      return Teacher(
+        json['teacher_id'] as int,
+        json['name'] as String,
+        json['grade'] as String,
+        json['arrived'] as bool,
+      );
+    } catch (e) {
+      throw const FormatException('Invalid or missing data in JSON');
+    }
+  }
+}
+
+class Teachers {
+  final List<Teacher> teachers;
+
+  Teachers({required this.teachers});
+
+  factory Teachers.fromJson(List<dynamic> json) {
+    List<Teacher> teachers = [];
+    teachers = json.map((i) => Teacher.fromJson(i)).toList();
+    return Teachers(teachers: teachers);
+  }
 }

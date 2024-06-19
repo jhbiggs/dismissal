@@ -29,7 +29,28 @@ func GetBuses(ctx *gin.Context) {
 	// It just takes the data from the column and puts them into the fields you specify.
 	dbInstance := GetDB()
 	rows, err := dbInstance.Query("SELECT * FROM dismissal_schema.buses")
-	print ("bus service go rows are: ",rows)
+	// print each row in rows
+	if err != nil {
+		fmt.Println("Error querying the database: ", err)
+		return
+	}
+	defer rows.Close()
+	// iterate over the rows object and print the values of each row.
+	for rows.Next() {
+		var row go_objects.Bus
+		err = rows.Scan(&row.BusID, &row.Number, &row.Animal, &row.Arrived)
+		if err != nil {
+			fmt.Println("Error scanning the row: ", err)
+			return
+		} else {
+			fmt.Println("ID: ", row.BusID, "Animal name: ", row.Animal,
+				"Bus Number: ", row.Number, "Arrived: ", row.Arrived)
+			mtx.Lock()
+			busList = append(busList, row)
+			// unlock the thread
+			mtx.Unlock()
+		}
+	}
 	if err != nil {
 		fmt.Println("Error querying the database: ", err)
 		return

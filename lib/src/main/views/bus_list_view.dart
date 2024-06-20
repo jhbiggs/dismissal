@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bus/src/main/flutter_objects/bus.dart';
+import 'package:flutter_bus/src/main/views/emoji_translator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bus/src/main/flutter_db_service/flutter_db_service.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class BusListView extends StatefulWidget {
   static const routeName = '/bus_list';
@@ -14,8 +16,8 @@ class BusListView extends StatefulWidget {
 
 class _BusListViewState extends State<BusListView> {
   // create a blank list of buses and a list of selected items
-   List<Bus> items = [];
-   List<bool> _selected = [];
+  List<Bus> items = [];
+  List<bool> _selected = [];
 
   void loadBuses() async {
     items = await fetchBuses();
@@ -57,7 +59,7 @@ class _BusListViewState extends State<BusListView> {
                 backgroundColor: const Color.fromARGB(153, 133, 128, 128),
                 // Display the Flutter Logo image asset.
                 child: Text(
-                  item.animal,
+                  item.animal.toEnum().emoji,
                   style: const TextStyle(fontSize: 35),
                 ),
               ),

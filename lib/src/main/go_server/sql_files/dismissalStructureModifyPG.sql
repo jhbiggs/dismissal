@@ -10,9 +10,15 @@ CREATE TABLE Buses (
   Arrived BOOLEAN NOT NULL
 );
 
-INSERT INTO Buses (Name, Animal, Arrived) VALUES ('Bus 1', 'Dog', FALSE);
-INSERT INTO Buses (Name, Animal, Arrived) VALUES ('Bus 2', 'Cat', FALSE);
-INSERT INTO Buses (Name, Animal, Arrived) VALUES ('Bus 3', 'Bird', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('2206', 'snail', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('2306', 'dinosaur', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('1502', 'elephant', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('1703', 'bear', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('2202', 'eagle', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('1904', 'squirrel', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('2104', 'cow', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('2305', 'alligator', FALSE);
+INSERT INTO Buses (Name, Animal, Arrived) VALUES ('2028', 'kangaroo', FALSE);
 
 DROP TABLE IF EXISTS Teachers;
 CREATE TABLE Teachers (
@@ -44,3 +50,13 @@ INSERT INTO Teachers (Name, Grade, Arrived) VALUES ('Ms. Yackus', 'Third Grade',
 INSERT INTO Teachers (Name, Grade, Arrived) VALUES ('Ms. Peters', 'Third Grade', FALSE);
 INSERT INTO Teachers (Name, Grade, Arrived) VALUES ('Ms. Rozinski', 'Third Grade', FALSE);
 INSERT INTO Teachers (Name, Grade, Arrived) VALUES ('Ms. Lakin', 'Third Grade', FALSE);
+
+
+CREATE OR REPLACE TRIGGER buses_notify_event
+AFTER INSERT OR UPDATE OR DELETE ON dismissal_schema.Buses
+  FOR EACH ROW EXECUTE PROCEDURE notify_event();
+
+
+CREATE OR REPLACE TRIGGER teachers_notify_event
+AFTER INSERT OR UPDATE OR DELETE ON dismissal_schema.Teachers
+  FOR EACH ROW EXECUTE PROCEDURE notify_event();

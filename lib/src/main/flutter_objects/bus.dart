@@ -1,3 +1,4 @@
+
 class Bus {
   final int id;
   final String name;
@@ -6,7 +7,7 @@ class Bus {
 
   Bus(this.id, this.name, this.animal, this.arrived);
 
-  // The factory constructor is used to create a 
+  // The factory constructor is used to create a
   // new instance of the bus class from a JSON (map) object.
   factory Bus.fromJson(Map<String, dynamic> json) {
     try {

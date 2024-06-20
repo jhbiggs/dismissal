@@ -7,7 +7,10 @@ import (
 	"net"
 	"net/http"
 	"sync"
-
+	
+	"database/sql"
+	"time"
+	"github.com/lib/pq"
 	"dismissal.com/m/v2/outbound_service"
 	"github.com/gin-gonic/gin"
 	// local imports
@@ -31,6 +34,27 @@ var (
 func main() {
 	// init db for all other services
 	database_service.InitDB()
+	var conninfo string = "dbname=localdatabase user=postgres password=Pcvh35$79 sslmode=disable"
+
+	_, err := sql.Open("postgres", conninfo)
+	if err != nil {
+		panic(err)
+	}
+
+	reportProblem := func(ev pq.ListenerEventType, err error) {
+		if err != nil {
+			fmt.Println("Hey, so reporting a problem: ",err.Error())
+		}
+	}
+
+	listener := pq.NewListener(conninfo, 10*time.Second, time.Minute,
+	reportProblem)
+	err = listener.Listen("events")
+	if err != nil {
+		panic (err)
+	}
+
+
 
 	outbound_service.Init()
 
@@ -67,7 +91,10 @@ ginRouter.PUT("/teachers/:teacher_id/toggleTeacherArrivalStatus", func (ctx *gin
 		}
 		cancelCtx()
 	}()
-
+	fmt.Println("Monitoring PostgreSQL now...")
+	for {
+		database_service.WaitForNotification(listener);
+	}
 
 	<-ctx.Done()
 }

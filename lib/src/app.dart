@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bus/src/main/views/bus_list_view.dart';
 import 'package:flutter_bus/src/main/views/main_view.dart';
+import 'package:flutter_bus/src/main/views/streaming_blank.dart';
 import 'main/views/sample_item_details_view.dart';
 import 'main/views/teacher_list_view.dart';
 import 'settings/settings_controller.dart';

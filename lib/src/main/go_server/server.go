@@ -7,6 +7,11 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"log"
+	"github.com/google/uuid"
+	"crypto/sha1"
+	"encoding/base64"
+
 	
 	"database/sql"
 	"time"
@@ -15,7 +20,8 @@ import (
 	"github.com/gin-gonic/gin"
 	// local imports
 	"dismissal.com/m/v2/database_service" 
-	// Add this line to import the package
+	"github.com/gorilla/websocket"
+	"os"
 )
 
 var (
@@ -54,6 +60,35 @@ func main() {
 		panic (err)
 	}
 
+	// websocket token creation steps
+	// 1. Generate a random UUID
+	// 2. Encode the UUID to a string
+	// 3. Send the string to the client
+	// 4. The client will use the string to connect to the websocket
+	// 5. The server will check the string to see if it is valid
+	// 6. If the string is valid, the client will be allowed to connect
+	// 7. If the string is invalid, the client will be disconnected
+
+	// generate a random UUID
+	uuid := uuid.New()
+
+	// encode the UUID to a string
+	// the string will be used as a token
+	hash := sha1.New()
+	encoder := base64.NewEncoder(base64.StdEncoding, os.Stdout)
+	encoder.Write(uuid[:])
+
+	fmt.Println("encoder here... \n")
+	encoder.Write(hash.Sum(nil))
+
+	encoder.Close()
+
+
+
+	webSocketHandler := webSocketHandler{
+		upgrader: websocket.Upgrader{
+		},
+	}
 
 
 	outbound_service.Init()
@@ -61,6 +96,8 @@ func main() {
 
 	//Initialize request router
 ginRouter := gin.Default()
+ginRouterTwo := gin.Default()
+
 ginRouter.GET("/buses", func (ctx *gin.Context) { database_service.GetBuses(ctx) })
 ginRouter.GET("/teachers", func (ctx *gin.Context) { database_service.GetTeachers(ctx) })
 // ginRouter.POST("/buses", func (ctx *gin.Context) { database_service.AddBus(ctx) })
@@ -68,12 +105,24 @@ ginRouter.GET("/teachers", func (ctx *gin.Context) { database_service.GetTeacher
 // ginRouter.POST("/teachers", func (ctx *gin.Context) { database_service.AddTeacher(ctx) })
 ginRouter.PUT("/buses/:id/toggleBusArrivalStatus", func (ctx *gin.Context) { database_service.ToggleBusArrivalStatus(ctx) })
 ginRouter.PUT("/teachers/:teacher_id/toggleTeacherArrivalStatus", func (ctx *gin.Context) { database_service.ToggleTeacherArrivalStatus(ctx) })
+ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHandler.NotificationStream(ctx, listener) })
 
 	
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	serverOne := &http.Server{
 		Addr:    ":8080",
 		Handler: ginRouter,
+		BaseContext: func(l net.Listener) context.Context {
+			ctx = context.WithValue(ctx, "listener", l.Addr().String())
+			return ctx
+		},
+	}
+
+
+
+	serverTwo := &http.Server{
+		Addr:    ":80",
+		Handler: ginRouterTwo,
 		BaseContext: func(l net.Listener) context.Context {
 			ctx = context.WithValue(ctx, "listener", l.Addr().String())
 			return ctx
@@ -91,10 +140,58 @@ ginRouter.PUT("/teachers/:teacher_id/toggleTeacherArrivalStatus", func (ctx *gin
 		}
 		cancelCtx()
 	}()
+
+	go func() {
+		fmt.Printf("server two listening on port 8081 \n")
+		err := serverTwo.ListenAndServe()
+		// err := serverTwo.ListenAndServeTLS("server.crt", "server.key")
+		if errors.Is(err, http.ErrServerClosed) {
+			fmt.Printf("server two closed \n")
+		} else if err != nil {
+			fmt.Printf("error listening on server two: %s \n", err)
+		}
+		cancelCtx()
+	}()
+
 	fmt.Println("Monitoring PostgreSQL now...")
-	for {
-		database_service.WaitForNotification(listener);
-	}
+
 
 	<-ctx.Done()
+}
+
+type webSocketHandler struct {
+	upgrader websocket.Upgrader
+
+}
+
+
+func (wsh webSocketHandler) NotificationStream (ctx *gin.Context, l *pq.Listener) {
+	c, err := wsh.upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+
+	if err != nil {
+		log.Printf("error %s when upgrading connection to websocket", err)
+		return
+	}
+
+	defer func() {
+		log.Println("closing connection")
+		c.Close()
+	}()
+
+	i := 1
+
+	// go has a nifty infinite loop syntax, it's just a for loop with no condition
+	for {
+		responseInBytes := database_service.WaitForNotification(l)
+		fmt.Println("response in string: ", string(responseInBytes))
+		response := fmt.Sprintf("Notification %d", i)
+		err = c.WriteMessage(websocket.TextMessage, []byte(response))
+		if err != nil {
+			log.Printf("Error %s when sending message to client", err)
+			return
+		}
+
+	}
+
+
 }

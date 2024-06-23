@@ -75,7 +75,7 @@ class MyApp extends StatelessWidget {
                   case BusListView.routeName:
                     return const BusListView();
                   default:
-                    return const MainView();
+                    return const MyHomePage('abc', title: 'Flutter Demo Home Page');
                 }
               },
             );

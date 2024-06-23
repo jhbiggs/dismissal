@@ -15,9 +15,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
-  final _channel = WebSocketChannel.connect(
-    Uri.parse('wss://echo.websocket.events'),
-  );
+  final _channel = WebSocketChannel.connect(Uri
+    .parse('ws://localhost:8080/'));
 
   @override
   Widget build(BuildContext context) {

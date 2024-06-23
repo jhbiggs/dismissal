@@ -19,6 +19,10 @@ class _BusListViewState extends State<BusListView> {
   List<Bus> items = [];
   List<bool> _selected = [];
 
+  final _channel = WebSocketChannel.connect(Uri
+    .parse('ws://localhost:8080'));
+  
+
   void loadBuses() async {
     items = await fetchBuses();
 

@@ -8,7 +8,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func WaitForNotification(listener *pq.Listener) {
+func WaitForNotification(listener *pq.Listener) []byte  {
 	for {
 			select {
 			case n:= <-listener.Notify:
@@ -18,17 +18,17 @@ func WaitForNotification(listener *pq.Listener) {
 				err := json.Indent(&prettyJSON, []byte(n.Extra), "","\t");
 				if err != nil {
 						fmt.Println("Error processing JSON: ", err);
-						return;
+						return nil;
 				}
-				fmt.Println(string(prettyJSON.Bytes()));
-				return;
+				// fmt.Println(string(prettyJSON.Bytes()));
+				return prettyJSON.Bytes();
 			// the "<-" operator is a channel receiver
 		case <-time.After(90 * time.Second):
 			fmt.Println("Received no events for 90 seconds, checking connection");
 			go func () {
 				listener.Ping();
 			}()
-			return;
+			return nil;
 	}
 }
 }

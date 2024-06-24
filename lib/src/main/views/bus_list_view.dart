@@ -1,7 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bus/src/main/flutter_objects/bus.dart';
 import 'package:flutter_bus/src/main/views/emoji_translator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bus/src/main/flutter_db_service/flutter_db_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -49,14 +50,32 @@ class _BusListViewState extends State<BusListView> {
           stream: _channel.stream,
           initialData: items,
           builder: (context, snapshot) {
-            print(snapshot.data);
-            ;
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+                print('No connection');
+                break;
+              case ConnectionState.waiting:
+                print('Awaiting connection...');
+                break;
+              case ConnectionState.active:
+                final parsed = jsonDecode(snapshot.data.toString());
+                print(parsed['data']);
+                Bus testBus = Bus.fromJson(parsed['data']);
+                print(testBus.busNumber);
+                print(testBus.id);
+                print(testBus.arrived);
+                break;
+              case ConnectionState.done:
+                print('Connection closed');
+                break;
+            }
+
             return ListView.builder(
               itemCount: items.length,
               itemBuilder: (context, index) {
                 return ListTile(
                     tileColor: _selected[index] ? Colors.blue : Colors.white,
-                    title: Text('Bus ${items[index].name}'),
+                    title: Text('Bus ${items[index].busNumber}'),
                     leading: CircleAvatar(
                       // Display the Flutter Logo image asset.
                       backgroundColor: const Color.fromARGB(153, 133, 128, 128),

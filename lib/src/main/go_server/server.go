@@ -142,7 +142,7 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 	}()
 
 	go func() {
-		fmt.Printf("server two listening on port 8081 \n")
+		fmt.Printf("server two listening on port 80 \n")
 		err := serverTwo.ListenAndServe()
 		// err := serverTwo.ListenAndServeTLS("server.crt", "server.key")
 		if errors.Is(err, http.ErrServerClosed) {

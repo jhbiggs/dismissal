@@ -14,7 +14,7 @@ Future<List<Bus>> fetchBuses() async {
     if (list['buses'] != null) {
       List<Bus> buses =
           list['buses'].map<Bus>((bus) => Bus.fromJson(bus)).toList() ;
-          buses.sort((a, b) => a.name.compareTo(b.name));
+          buses.sort((a, b) => a.busNumber.compareTo(b.busNumber));
       return buses;
     } else {
       return [];

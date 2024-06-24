@@ -1,19 +1,19 @@
 
 class Bus {
   final int id;
-  final String name;
+  final String busNumber;
   final String animal;
   bool arrived = false;
 
-  Bus(this.id, this.name, this.animal, this.arrived);
+  Bus(this.id, this.busNumber, this.animal, this.arrived);
 
   // The factory constructor is used to create a
   // new instance of the bus class from a JSON (map) object.
   factory Bus.fromJson(Map<String, dynamic> json) {
     try {
       return Bus(
-        json['id'] as int,
-        json['number'] as String,
+        json['busid'] as int,
+        json['busnumber'] as String,
         json['animal'] as String,
         json['arrived'] as bool,
       );

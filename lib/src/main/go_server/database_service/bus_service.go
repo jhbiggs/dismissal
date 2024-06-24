@@ -38,13 +38,13 @@ func GetBuses(ctx *gin.Context) {
 	// iterate over the rows object and print the values of each row.
 	for rows.Next() {
 		var row go_objects.Bus
-		err = rows.Scan(&row.BusID, &row.Number, &row.Animal, &row.Arrived)
+		err = rows.Scan(&row.BusID, &row.BusNumber, &row.Animal, &row.Arrived)
 		if err != nil {
 			fmt.Println("Error scanning the row: ", err)
 			return
 		} else {
 			fmt.Println("ID: ", row.BusID, "Animal name: ", row.Animal,
-				"Bus Number: ", row.Number, "Arrived: ", row.Arrived)
+				"Bus Number: ", row.BusNumber, "Arrived: ", row.Arrived)
 			mtx.Lock()
 			busList = append(busList, row)
 			// unlock the thread
@@ -59,13 +59,13 @@ func GetBuses(ctx *gin.Context) {
 	// iterate over the rows object and print the values of each row.
 	for rows.Next() {
 		var row go_objects.Bus
-		err = rows.Scan(&row.BusID, &row.Number, &row.Animal, &row.Arrived)
+		err = rows.Scan(&row.BusID, &row.BusNumber, &row.Animal, &row.Arrived)
 		if err != nil {
 			fmt.Println("Error scanning the row: ", err)
 			return
 		} else {
 			fmt.Println("ID: ", row.BusID, "Animal name: ", row.Animal,
-				"Bus Number: ", row.Number, "Arrived: ", row.Arrived)
+				"Bus Number: ", row.BusNumber, "Arrived: ", row.Arrived)
 
 			mtx.Lock()
 			busList = append(busList, row)

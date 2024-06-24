@@ -19,9 +19,8 @@ class _BusListViewState extends State<BusListView> {
   List<Bus> items = [];
   List<bool> _selected = [];
 
-  final _channel = WebSocketChannel.connect(Uri
-    .parse('ws://localhost:8080'));
-  
+  final _channel = WebSocketChannel.connect(
+      Uri.parse('ws://localhost:80/notification-stream'));
 
   void loadBuses() async {
     items = await fetchBuses();
@@ -46,52 +45,43 @@ class _BusListViewState extends State<BusListView> {
       // In contrast to the default ListView constructor, which requires
       // building all Widgets up front, the ListView.builder constructor lazily
       // builds Widgets as they’re scrolled into view.
-      body: ListView.builder(
-        // Providing a restorationId allows the ListView to restore the
-        // scroll position when a user leaves and returns to the app after it
-        // has been killed while running in the background.
-        restorationId: 'busListView',
-        itemCount: items.length,
-        itemBuilder: (BuildContext context, int index) {
-          final item = items[index];
-
-          return ListTile(
-              tileColor: _selected[index] ? Colors.blue : Colors.white,
-              title: Text('Bus ${item.name}'),
-              leading: CircleAvatar(
-                // Display the Flutter Logo image asset.
-                backgroundColor: const Color.fromARGB(153, 133, 128, 128),
-                // Display the Flutter Logo image asset.
-                child: Text(
-                  item.animal.toEnum().emoji,
-                  style: const TextStyle(fontSize: 35),
-                ),
-              ),
-              onTap: () {
-                setState(() {
-                  item.arrived = !item.arrived;
-                  updateBus(item).then((value) {
-                    loadBuses();
-                    _selected[index] = !_selected[index];
-                  });
-                });
-                // Save the state of the list item.
-                SharedPreferences.getInstance().then((prefs) {
-                  prefs.setBool('Bus$index', _selected[index]);
-                });
-              });
-          // () {
-          // Navigate to the details page. If the user leaves and returns to
-          // the app after it has been killed while running in the
-          // background, the navigation stack is restored.
-
-          // Navigator.restorablePushNamed(
-          //   context,
-          //   SampleItemDetailsView.routeName,
-          // );
-          // });
-        },
-      ),
+      body: StreamBuilder(
+          stream: _channel.stream,
+          initialData: items,
+          builder: (context, snapshot) {
+            print(snapshot.data);
+            ;
+            return ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                    tileColor: _selected[index] ? Colors.blue : Colors.white,
+                    title: Text('Bus ${items[index].name}'),
+                    leading: CircleAvatar(
+                      // Display the Flutter Logo image asset.
+                      backgroundColor: const Color.fromARGB(153, 133, 128, 128),
+                      // Display the Flutter Logo image asset.
+                      child: Text(
+                        items[index].animal.toEnum().emoji,
+                        style: const TextStyle(fontSize: 35),
+                      ),
+                    ),
+                    onTap: () {
+                      setState(() {
+                        items[index].arrived = !items[index].arrived;
+                        updateBus(items[index]).then((value) {
+                          loadBuses();
+                          _selected[index] = !_selected[index];
+                        });
+                      });
+                      // Save the state of the list item.
+                      // SharedPreferences.getInstance().then((prefs) {
+                      //   prefs.setBool('Bus$index', _selected[index]);
+                      // });
+                    });
+              },
+            );
+          }),
     );
   }
 }

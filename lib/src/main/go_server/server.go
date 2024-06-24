@@ -178,19 +178,19 @@ func (wsh webSocketHandler) NotificationStream (ctx *gin.Context, l *pq.Listener
 		c.Close()
 	}()
 
-	i := 1
+	// i := 1
 
 	// go has a nifty infinite loop syntax, it's just a for loop with no condition
 	for {
 		responseInBytes := database_service.WaitForNotification(l)
 		fmt.Println("response in string: ", string(responseInBytes))
-		response := fmt.Sprintf("Notification %d", i)
-		err = c.WriteMessage(websocket.TextMessage, []byte(response))
+		// response := fmt.Sprintf("Notification %d", i)
+		err = c.WriteMessage(websocket.TextMessage, []byte(responseInBytes))
 		if err != nil {
 			log.Printf("Error %s when sending message to client", err)
 			return
 		}
-
+		// i++
 	}
 
 

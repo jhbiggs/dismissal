@@ -12,16 +12,18 @@ import (
 var (
 	DB *sql.DB
 )
+
 const (
-	host = "localhost"
-	port = 5432
-	user = "postgres"
+	host     = "172.16.56.23"
+	port     = 5432
+	user     = "postgres"
 	password = "Pcvh35$79"
-	dbname = "localdatabase"
+	dbname   = "localdatabase"
 )
+
 func InitDB() {
 	var err error
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s "+ 
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s "+
 		"sslmode=disable", host, port, user, password, dbname)
 	//Opening Connection to local postgres database running on local port 5432.
 	DB, err = sql.Open("postgres", psqlInfo)
@@ -43,4 +45,3 @@ func GetDB() *sql.DB {
 func CloseDB() {
 	DB.Close()
 }
-

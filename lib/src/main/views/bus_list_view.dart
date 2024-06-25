@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bus/src/main/flutter_objects/bus.dart';
@@ -21,11 +22,18 @@ class _BusListViewState extends State<BusListView> {
   List<bool> _selected = [];
 
   final _channel = WebSocketChannel.connect(
-      Uri.parse('ws://localhost:80/notification-stream'));
+      Uri.parse('ws://172.16.56.23:80/notification-stream'));
 
   void loadBuses() async {
-    items = await fetchBuses();
+    // items = await fetchBuses();
 
+    setState(() {
+      _selected = List<bool>.from(items.map((e) => e.arrived));
+    });
+  }
+
+  void initLoadBuses() async {
+    items = await fetchBuses();
     setState(() {
       _selected = List<bool>.from(items.map((e) => e.arrived));
     });
@@ -34,11 +42,54 @@ class _BusListViewState extends State<BusListView> {
   @override
   void initState() {
     super.initState();
-    loadBuses();
+    initLoadBuses();
   }
+
+  void _toggleBusArrival(Bus bus) {
+    setState(() {
+      bus.arrived = !bus.arrived;
+      updateBus(bus);
+      // Consider reloading bus data if necessary
+    });
+  }
+
+  Widget _buildBusList(AsyncSnapshot snapshot, Bus testBus) {
+  // Check for connection state and data availability first
+  if (snapshot.connectionState == ConnectionState.active && snapshot.hasData) {
+    try {
+      final parsed = jsonDecode(snapshot.data.toString());
+      testBus = Bus.fromJson(parsed['data']);
+      // Update the items with the new arrival status
+      items.firstWhere((element) => element.id == testBus.id).arrived = testBus.arrived;
+      _selected = List<bool>.from(items.map((e) => e.arrived));
+    } on FormatException catch (e) {
+      // Handle JSON format exception
+      print('Error parsing JSON data: $e');
+      return Text('Error parsing data');
+    }
+  } 
+
+  // Render ListView if data is available or connection state is none/waiting/active
+  return ListView.builder(
+    itemCount: items.length,
+    itemBuilder: (context, index) {
+      final bus = items[index];
+      return ListTile(
+        title: Text('Bus ${bus.busNumber}'),
+        leading: CircleAvatar(
+          backgroundColor: const Color.fromARGB(153, 133, 128, 128),
+          child: Text(bus.animal.toEnum().emoji, style: const TextStyle(fontSize: 35)),
+        ),
+        tileColor: bus.arrived ? Colors.blue : Colors.white,
+        onTap: () => _toggleBusArrival(bus),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
+    Bus testBus = Bus(0, '', '', false);
     return Scaffold(
       // To work with lists that may contain a large number of items, it’s best
       // to use the ListView.builder constructor.
@@ -50,57 +101,9 @@ class _BusListViewState extends State<BusListView> {
           stream: _channel.stream,
           initialData: items,
           builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-                print('No connection');
-                break;
-              case ConnectionState.waiting:
-                print('Awaiting connection...');
-                break;
-              case ConnectionState.active:
-                final parsed = jsonDecode(snapshot.data.toString());
-                print(parsed['data']);
-                Bus testBus = Bus.fromJson(parsed['data']);
-                print(testBus.busNumber);
-                print(testBus.id);
-                print(testBus.arrived);
-                break;
-              case ConnectionState.done:
-                print('Connection closed');
-                break;
-            }
-
-            return ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                    tileColor: _selected[index] ? Colors.blue : Colors.white,
-                    title: Text('Bus ${items[index].busNumber}'),
-                    leading: CircleAvatar(
-                      // Display the Flutter Logo image asset.
-                      backgroundColor: const Color.fromARGB(153, 133, 128, 128),
-                      // Display the Flutter Logo image asset.
-                      child: Text(
-                        items[index].animal.toEnum().emoji,
-                        style: const TextStyle(fontSize: 35),
-                      ),
-                    ),
-                    onTap: () {
-                      setState(() {
-                        items[index].arrived = !items[index].arrived;
-                        updateBus(items[index]).then((value) {
-                          loadBuses();
-                          _selected[index] = !_selected[index];
-                        });
-                      });
-                      // Save the state of the list item.
-                      // SharedPreferences.getInstance().then((prefs) {
-                      //   prefs.setBool('Bus$index', _selected[index]);
-                      // });
-                    });
-              },
-            );
+            return _buildBusList(snapshot, testBus);
           }),
     );
   }
 }
+

@@ -18,6 +18,7 @@ func WaitForNotification(listener *pq.Listener) []byte  {
 				err := json.Indent(&prettyJSON, []byte(n.Extra), "","\t");
 				if err != nil {
 						fmt.Println("Error processing JSON: ", err);
+						// return an empty byte array
 						return nil;
 				}
 				// fmt.Println(string(prettyJSON.Bytes()));

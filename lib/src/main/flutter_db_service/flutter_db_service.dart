@@ -5,7 +5,7 @@ import 'package:flutter_bus/src/main/flutter_objects/teacher.dart';
 import 'package:http/http.dart' as http;
 
 Future<List<Bus>> fetchBuses() async {
-  final response = await http.get(Uri.parse('http://localhost:8080/buses'));
+  final response = await http.get(Uri.parse('http://172.16.56.23:8080/buses'));
 
   if (response.statusCode == 200) {
     // If the server returns a 200 OK response,
@@ -13,8 +13,8 @@ Future<List<Bus>> fetchBuses() async {
     Map<String, dynamic> list = json.decode(response.body);
     if (list['buses'] != null) {
       List<Bus> buses =
-          list['buses'].map<Bus>((bus) => Bus.fromJson(bus)).toList() ;
-          buses.sort((a, b) => a.busNumber.compareTo(b.busNumber));
+          list['buses'].map<Bus>((bus) => Bus.fromJson(bus)).toList();
+      buses.sort((a, b) => a.busNumber.compareTo(b.busNumber));
       return buses;
     } else {
       return [];
@@ -27,16 +27,18 @@ Future<List<Bus>> fetchBuses() async {
 }
 
 Future<List<Teacher>> fetchTeachers() async {
-  final response = await http.get(Uri.parse('http://localhost:8080/teachers'));
+  final response =
+      await http.get(Uri.parse('http://172.16.56.23:8080/teachers'));
 
   if (response.statusCode == 200) {
     // If the server returns a 200 OK response,
     // then parse the JSON.
     Map<String, dynamic> list = json.decode(response.body);
     if (list['teachers'] != null) {
-      List<Teacher> teachers =
-          list['teachers'].map<Teacher>((teacher) => Teacher.fromJson(teacher)).toList();
-          teachers.sort((a, b) => a.name.compareTo(b.name));
+      List<Teacher> teachers = list['teachers']
+          .map<Teacher>((teacher) => Teacher.fromJson(teacher))
+          .toList();
+      teachers.sort((a, b) => a.name.compareTo(b.name));
       return teachers;
     } else {
       return [];
@@ -50,7 +52,8 @@ Future<List<Teacher>> fetchTeachers() async {
 
 Future<http.Response> updateBus(Bus bus) async {
   final response = await http.put(
-    Uri.parse('http://localhost:8080/buses/${bus.id}/toggleBusArrivalStatus'),
+    Uri.parse(
+        'http://172.16.56.23:8080/buses/${bus.id}/toggleBusArrivalStatus'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -70,7 +73,8 @@ Future<http.Response> updateBus(Bus bus) async {
 
 Future<http.Response> updateTeacher(Teacher teacher) async {
   final response = await http.put(
-    Uri.parse('http://localhost:8080/teachers/${teacher.id}/toggleTeacherArrivalStatus'),
+    Uri.parse(
+        'http://172.16.56.23:8080/teachers/${teacher.id}/toggleTeacherArrivalStatus'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -84,6 +88,7 @@ Future<http.Response> updateTeacher(Teacher teacher) async {
   } else {
     // If the server returns an error response,
     // then throw an exception.
-    throw Exception('Failed to update teacher, error code: ${response.statusCode}');
+    throw Exception(
+        'Failed to update teacher, error code: ${response.statusCode}');
   }
 }

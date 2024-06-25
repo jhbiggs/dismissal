@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage(String s, {
+  const MyHomePage(
+    String s, {
     super.key,
     required this.title,
   });
@@ -15,8 +16,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
-  final _channel = WebSocketChannel.connect(Uri
-    .parse('ws://localhost:8080/'));
+  final _channel =
+      WebSocketChannel.connect(Uri.parse('ws://172.16.56.23:8080/'));
 
   @override
   Widget build(BuildContext context) {

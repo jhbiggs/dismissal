@@ -43,8 +43,8 @@ func GetBuses(ctx *gin.Context) {
 			fmt.Println("Error scanning the row: ", err)
 			return
 		} else {
-			fmt.Println("ID: ", row.BusID, "Animal name: ", row.Animal,
-				"Bus Number: ", row.BusNumber, "Arrived: ", row.Arrived)
+			// fmt.Println("ID: ", row.BusID, "Animal name: ", row.Animal,
+			// 	"Bus Number: ", row.BusNumber, "Arrived: ", row.Arrived)
 			mtx.Lock()
 			busList = append(busList, row)
 			// unlock the thread

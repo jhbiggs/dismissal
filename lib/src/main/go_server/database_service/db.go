@@ -14,7 +14,7 @@ var (
 )
 
 const (
-	host     = "172.16.56.23"
+	host     = "localhost"
 	port     = 5432
 	user     = "postgres"
 	password = "Pcvh35$79"

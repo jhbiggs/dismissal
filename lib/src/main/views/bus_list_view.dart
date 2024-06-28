@@ -19,7 +19,6 @@ class BusListView extends StatefulWidget {
 class _BusListViewState extends State<BusListView> {
   // create a blank list of buses and a list of selected items
   List<Bus> items = [];
-  List<bool> _selected = [];
 
   final _channel = WebSocketChannel.connect(
       Uri.parse('ws://172.16.56.23:80/notification-stream'));
@@ -28,14 +27,12 @@ class _BusListViewState extends State<BusListView> {
     // items = await fetchBuses();
 
     setState(() {
-      _selected = List<bool>.from(items.map((e) => e.arrived));
     });
   }
 
   void initLoadBuses() async {
     items = await fetchBuses();
     setState(() {
-      _selected = List<bool>.from(items.map((e) => e.arrived));
     });
   }
 
@@ -61,7 +58,6 @@ class _BusListViewState extends State<BusListView> {
       testBus = Bus.fromJson(parsed['data']);
       // Update the items with the new arrival status
       items.firstWhere((element) => element.id == testBus.id).arrived = testBus.arrived;
-      _selected = List<bool>.from(items.map((e) => e.arrived));
     } on FormatException catch (e) {
       // Handle JSON format exception
       print('Error parsing JSON data: $e');

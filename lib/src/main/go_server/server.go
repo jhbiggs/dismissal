@@ -110,7 +110,7 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 	
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	serverOne := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":80",
 		Handler: ginRouter,
 		BaseContext: func(l net.Listener) context.Context {
 			ctx = context.WithValue(ctx, "listener", l.Addr().String())
@@ -120,17 +120,17 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 
 
 
-	serverTwo := &http.Server{
-		Addr:    ":80",
-		Handler: ginRouterTwo,
-		BaseContext: func(l net.Listener) context.Context {
-			ctx = context.WithValue(ctx, "listener", l.Addr().String())
-			return ctx
-		},
-	}
+	// serverTwo := &http.Server{
+	// 	Addr:    ":80",
+	// 	Handler: ginRouterTwo,
+	// 	BaseContext: func(l net.Listener) context.Context {
+	// 		ctx = context.WithValue(ctx, "listener", l.Addr().String())
+	// 		return ctx
+	// 	},
+	// }
 
 	go func() {
-		fmt.Printf("server one listening on port 8080 \n")
+		fmt.Printf("server one listening on port 80 \n")
 		// err := serverOne.ListenAndServeTLS("","")
 		err := serverOne.ListenAndServe()
 		if errors.Is(err, http.ErrServerClosed) {
@@ -141,17 +141,17 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 		cancelCtx()
 	}()
 
-	go func() {
-		fmt.Printf("server two listening on port 80 \n")
-		err := serverTwo.ListenAndServe()
-		// err := serverTwo.ListenAndServeTLS("server.crt", "server.key")
-		if errors.Is(err, http.ErrServerClosed) {
-			fmt.Printf("server two closed \n")
-		} else if err != nil {
-			fmt.Printf("error listening on server two: %s \n", err)
-		}
-		cancelCtx()
-	}()
+	// go func() {
+	// 	fmt.Printf("server two listening on port 80 \n")
+	// 	err := serverTwo.ListenAndServe()
+	// 	// err := serverTwo.ListenAndServeTLS("server.crt", "server.key")
+	// 	if errors.Is(err, http.ErrServerClosed) {
+	// 		fmt.Printf("server two closed \n")
+	// 	} else if err != nil {
+	// 		fmt.Printf("error listening on server two: %s \n", err)
+	// 	}
+	// 	cancelCtx()
+	// }()
 
 	fmt.Println("Monitoring PostgreSQL now...")
 

@@ -4,8 +4,12 @@ import 'package:flutter_bus/src/main/flutter_objects/bus.dart';
 import 'package:flutter_bus/src/main/flutter_objects/teacher.dart';
 import 'package:http/http.dart' as http;
 
+// const String baseUrl = 'http://ec2-52-201-69-55.compute-1.amazonaws.com:443';
+// const String baseUrl = 'https://dismissalapp.org';
+const String baseUrl = 'http://localhost';
+
 Future<List<Bus>> fetchBuses() async {
-  final response = await http.get(Uri.parse('http://172.16.56.23:8080/buses'));
+  final response = await http.get(Uri.parse('$baseUrl/buses'));
 
   if (response.statusCode == 200) {
     // If the server returns a 200 OK response,
@@ -28,7 +32,7 @@ Future<List<Bus>> fetchBuses() async {
 
 Future<List<Teacher>> fetchTeachers() async {
   final response =
-      await http.get(Uri.parse('http://172.16.56.23:8080/teachers'));
+      await http.get(Uri.parse('$baseUrl/teachers'));
 
   if (response.statusCode == 200) {
     // If the server returns a 200 OK response,
@@ -53,7 +57,7 @@ Future<List<Teacher>> fetchTeachers() async {
 Future<http.Response> updateBus(Bus bus) async {
   final response = await http.put(
     Uri.parse(
-        'http://172.16.56.23:8080/buses/${bus.id}/toggleBusArrivalStatus'),
+        '$baseUrl/buses/${bus.id}/toggleBusArrivalStatus'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -74,7 +78,7 @@ Future<http.Response> updateBus(Bus bus) async {
 Future<http.Response> updateTeacher(Teacher teacher) async {
   final response = await http.put(
     Uri.parse(
-        'http://172.16.56.23:8080/teachers/${teacher.id}/toggleTeacherArrivalStatus'),
+        '$baseUrl/teachers/${teacher.id}/toggleTeacherArrivalStatus'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },

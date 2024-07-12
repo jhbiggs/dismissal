@@ -40,7 +40,7 @@ var (
 func main() {
 	// init db for all other services
 	database_service.InitDB()
-	var conninfo string = "dbname=localdatabase user=postgres password=Pcvh35$79 sslmode=disable"
+	var conninfo string = "dbname=localdatabase user=justinbiggs password=Pcvh35$79 sslmode=disable"
 
 	_, err := sql.Open("postgres", conninfo)
 	if err != nil {
@@ -120,14 +120,14 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 
 
 
-	// serverTwo := &http.Server{
-	// 	Addr:    ":80",
-	// 	Handler: ginRouterTwo,
-	// 	BaseContext: func(l net.Listener) context.Context {
-	// 		ctx = context.WithValue(ctx, "listener", l.Addr().String())
-	// 		return ctx
-	// 	},
-	// }
+	serverTwo := &http.Server{
+		Addr:    ":8080",
+		Handler: ginRouterTwo,
+		BaseContext: func(l net.Listener) context.Context {
+			ctx = context.WithValue(ctx, "listener", l.Addr().String())
+			return ctx
+		},
+	}
 
 	go func() {
 		fmt.Printf("server one listening on port 80 \n")
@@ -141,17 +141,17 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 		cancelCtx()
 	}()
 
-	// go func() {
-	// 	fmt.Printf("server two listening on port 80 \n")
-	// 	err := serverTwo.ListenAndServe()
-	// 	// err := serverTwo.ListenAndServeTLS("server.crt", "server.key")
-	// 	if errors.Is(err, http.ErrServerClosed) {
-	// 		fmt.Printf("server two closed \n")
-	// 	} else if err != nil {
-	// 		fmt.Printf("error listening on server two: %s \n", err)
-	// 	}
-	// 	cancelCtx()
-	// }()
+	go func() {
+		fmt.Printf("server two listening on port 8080 \n")
+		err := serverTwo.ListenAndServe()
+		// err := serverTwo.ListenAndServeTLS("server.crt", "server.key")
+		if errors.Is(err, http.ErrServerClosed) {
+			fmt.Printf("server two closed \n")
+		} else if err != nil {
+			fmt.Printf("error listening on server two: %s \n", err)
+		}
+		cancelCtx()
+	}()
 
 	fmt.Println("Monitoring PostgreSQL now...")
 
@@ -166,7 +166,9 @@ type webSocketHandler struct {
 
 
 func (wsh webSocketHandler) NotificationStream (ctx *gin.Context, l *pq.Listener) {
+
 	c, err := wsh.upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+
 
 	if err != nil {
 		log.Printf("error %s when upgrading connection to websocket", err)

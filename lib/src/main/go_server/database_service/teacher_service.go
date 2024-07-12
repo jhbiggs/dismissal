@@ -32,8 +32,8 @@ func GetTeachers(ctx *gin.Context) {
 			fmt.Println("Error scanning the row: ", err)
 			return
 		} else {
-			fmt.Println("ID: ", row.TeacherID, "Name: ", row.Name,
-				"Arrived? ", row.Arrived)
+			// fmt.Println("ID: ", row.TeacherID, "Name: ", row.Name,
+			// 	"Arrived? ", row.Arrived)
 			mtx.Lock()
 			teacherList = append(teacherList, row)
 			// unlock the thread

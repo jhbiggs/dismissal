@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bus/src/main/flutter_objects/bus.dart';
@@ -20,8 +19,12 @@ class _BusListViewState extends State<BusListView> {
   // create a blank list of buses and a list of selected items
   List<Bus> items = [];
 
-  final _channel = WebSocketChannel.connect(
-      Uri.parse('ws://172.16.56.23:80/notification-stream'));
+  // final _channel = WebSocketChannel.connect(
+  //     Uri.parse('ws://dismissalapp.org:8080/notification-stream'));
+  //  final _channel = WebSocketChannel.connect(  
+  //     Uri.parse("ws://localhost:8080/notification-stream"));
+   final _channel = WebSocketChannel.connect(  
+      Uri.parse("ws://localhost:8080/notification-stream"));
 
   void loadBuses() async {
     // items = await fetchBuses();

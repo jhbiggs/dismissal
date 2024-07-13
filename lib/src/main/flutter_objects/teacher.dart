@@ -12,9 +12,10 @@ class Teacher {
   ///  instance of the teacher class from a JSON (map) object.
   factory Teacher.fromJson(Map<String, dynamic> json) {
     try {
+      // print(json);
       return Teacher(
-        json['teacher_id'] as int,
-        json['name'] as String,
+        json['teacherid'] as int,
+        json['teachername'] as String,
         json['grade'] as String,
         json['arrived'] as bool,
       );

@@ -1,8 +1,8 @@
 package go_objects
 
 type Teacher struct {
-	TeacherID int `json:"teacher_id"`
-	Name string `json:"name"`
+	TeacherID int `json:"teacherid"`
+	Name string `json:"teachername"`
 	Grade string `json:"grade"`
 	Arrived bool `json:"arrived"`
 }

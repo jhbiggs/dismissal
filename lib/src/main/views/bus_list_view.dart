@@ -24,7 +24,7 @@ class _BusListViewState extends State<BusListView> {
   //  final _channel = WebSocketChannel.connect(  
   //     Uri.parse("ws://localhost:8080/notification-stream"));
    final _channel = WebSocketChannel.connect(  
-      Uri.parse("ws://localhost:8080/notification-stream"));
+      Uri.parse("ws://$baseUrl:8080/notification-stream"));
 
   void loadBuses() async {
     // items = await fetchBuses();

@@ -23,8 +23,8 @@ class _TeacherListViewState extends State<TeacherListView> {
   // final _channel = WebSocketChannel.connect(
   //     Uri.parse('ws://dismissalapp.org:8080/notification-stream'));
   final _channel = WebSocketChannel.connect(
-      Uri.parse("ws://localhost:8080/notification-stream"));
-      // Uri.parse('wss://echo.websocket.events'));
+      Uri.parse("ws://$baseUrl:8080/notification-stream"));
+  // Uri.parse('wss://echo.websocket.events'));
   void loadTeachers() async {
     items = await fetchTeachers();
 
@@ -46,59 +46,49 @@ class _TeacherListViewState extends State<TeacherListView> {
     });
   }
 
-  Widget _buildTeacherList(AsyncSnapshot snapshot, Teacher testTeacher) {
-            print("try in snapshot activated && snapshot.hasData= ${snapshot.hasData} ");
+  Widget _buildTeacherList(AsyncSnapshot snapshot) {
+    // try {
+    //   final parsed = jsonDecode(snapshot.data.toString());
+    //   print(parsed['data']);
+    //   testTeacher = Teacher.fromJson(parsed['data']);
+    //   // Update the items with the new arrival status
+    //   items.firstWhere((element) => element.id == testTeacher.id).arrived =
+    //       testTeacher.arrived;
+    // } on FormatException catch (e) {
+    //   print('Invalid JSON: $e');
+    //   return const Text('Invalid JSON');
+    // }
+    if (snapshot.connectionState == ConnectionState.none ||
+        snapshot.connectionState == ConnectionState.waiting ||
+        snapshot.connectionState == ConnectionState.active) {
+final parsed = jsonDecode(snapshot.data.toString());
+//     final teacher1 = Teacher.fromJson(parsed['data']);
+        print(parsed);
+        if (parsed != null) {
+          final teacher = Teacher.fromJson(parsed['data']);
+          // Update the items with the new arrival status
+          items.firstWhere((element) => element.id == teacher.id).arrived =
+              teacher.arrived;
+        }
 
-    // Check for connection state and data availability first
-    if (snapshot.connectionState == ConnectionState.active &&
-        snapshot.hasData) {
-      try {
-        final parsed = jsonDecode(snapshot.data.toString());
-        testTeacher = Teacher.fromJson(parsed['data']);
-        // Update the items with the new arrival status
-        items.firstWhere((element) => element.id == testTeacher.id).arrived =
-            testTeacher.arrived;
-      } on FormatException catch (e) {
-        print('Invalid JSON: $e');
-        return const Text('Invalid JSON');
-      }
+      return ListView(padding: const EdgeInsets.all(16), children: [
+        for (var index = 0; index < items.length; index++)
+          ListTile(
+            title: Text('Teacher ${items[index].name}'),
+            leading: const CircleAvatar(
+              backgroundColor: Color.fromARGB(153, 133, 128, 128),
+              child: Icon(Icons.person),
+            ),
+            tileColor: items[index].arrived ? Colors.blue : Colors.white,
+            onTap: () => _toggleTeacherArrival(items[index]),
+          )
+      ]);
     }
-
-    // Render ListView if data are available or
-    // connection state is none/waiting/active
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final teacher = items[index];
-        return ListTile(
-          title: Text('Teacher ${teacher.name}'),
-          leading: const CircleAvatar(
-            backgroundColor: Color.fromARGB(153, 133, 128, 128),
-            child: Icon(Icons.person),
-          ),
-          tileColor: teacher.arrived ? Colors.blue : Colors.white,
-          onTap: () => _toggleTeacherArrival(teacher),
-        );
-      },
-    );
-  }
-  final TextEditingController _controller = TextEditingController();
-  void _sendMessage() {
-    if (_controller.text.isNotEmpty) {
-      _channel.sink.add(_controller.text);
-    }
-  }
-
-  @override
-  void dispose() {
-    _channel.sink.close();
-    _controller.dispose();
-    super.dispose();
+    return const Text('No data');
   }
 
   @override
   Widget build(BuildContext context) {
-    Teacher testTeacher = Teacher(0, 'no teacher', 'no grade', false);
     return Scaffold(
         // To work with lists that may contain a large number of items, it’s best
         // to use the ListView.builder constructor.
@@ -106,32 +96,12 @@ class _TeacherListViewState extends State<TeacherListView> {
         // In contrast to the default ListView constructor, which requires
         // building all Widgets up front, the ListView.builder constructor lazily
         // builds Widgets as they’re scrolled into view.
-        body: 
-        Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Form(
-              child: TextFormField(
-                controller: _controller,
-                decoration: const InputDecoration(labelText: 'Send a message'),
-              ),
-            ),
-            const SizedBox(height: 24),
-            StreamBuilder(
-              stream: _channel.stream,
-              builder: (context, snapshot) {
-                return Text(snapshot.hasData ? '${snapshot.data}' : '');
-              },
-            )
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _sendMessage,
-        tooltip: 'Send message',
-        child: const Icon(Icons.send),
-      )); // This trail);
+        body: StreamBuilder(
+      stream: _channel.stream,
+      builder: (context, snapshot) {
+        return _buildTeacherList(snapshot);
+        // return Text(snapshot.hasData ? '${snapshot.data}' : '');
+      },
+    ));
   }
 }

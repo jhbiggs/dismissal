@@ -23,6 +23,14 @@ class Teacher {
       throw const FormatException('Invalid or missing data in JSON');
     }
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'teacherid': id,
+      'teachername': name,
+      'grade': grade,
+      'arrived': arrived,
+    };
+  }
 }
 
 class Teachers {

@@ -22,6 +22,7 @@ import (
 	"dismissal.com/m/v2/database_service" 
 	"github.com/gorilla/websocket"
 	"os"
+	"dismissal.com/m/v2/websocket_service"
 )
 
 var (
@@ -29,6 +30,7 @@ var (
 	mtx sync.Mutex
 	// assure a specific operation will run only once
 	once sync.Once
+
 )
 
 // //go:embed server.crt
@@ -83,8 +85,7 @@ func main() {
 
 	encoder.Close()
 
-
-
+	manager := websocket_service.NewManager()
 	webSocketHandler := webSocketHandler{
 		upgrader: websocket.Upgrader{
 		},
@@ -94,9 +95,11 @@ func main() {
 	outbound_service.Init()
 
 
-	//Initialize request router
+// Initialize main router for web routes
 ginRouter := gin.Default()
-ginRouterTwo := gin.Default()
+// Initialize psql router for psql notification stream
+ginRouterPsql := gin.Default()
+
 
 ginRouter.GET("/buses", func (ctx *gin.Context) { database_service.GetBuses(ctx) })
 ginRouter.GET("/teachers", func (ctx *gin.Context) { database_service.GetTeachers(ctx) })
@@ -105,7 +108,9 @@ ginRouter.GET("/teachers", func (ctx *gin.Context) { database_service.GetTeacher
 // ginRouter.POST("/teachers", func (ctx *gin.Context) { database_service.AddTeacher(ctx) })
 ginRouter.PUT("/buses/:id/toggleBusArrivalStatus", func (ctx *gin.Context) { database_service.ToggleBusArrivalStatus(ctx) })
 ginRouter.PUT("/teachers/:teacher_id/toggleTeacherArrivalStatus", func (ctx *gin.Context) { database_service.ToggleTeacherArrivalStatus(ctx) })
-ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHandler.NotificationStream(ctx, listener) })
+
+ginRouter.GET("/ws", func (ctx *gin.Context) { manager.ServeWS(ctx) })	
+ginRouterPsql.GET("/psql-notification-stream", func (ctx *gin.Context) { webSocketHandler.PsqlNotificationStream(ctx, listener) })
 
 	
 	ctx, cancelCtx := context.WithCancel(context.Background())
@@ -120,9 +125,9 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 
 
 
-	serverTwo := &http.Server{
+	serverPsql := &http.Server{
 		Addr:    ":8080",
-		Handler: ginRouterTwo,
+		Handler: ginRouterPsql,
 		BaseContext: func(l net.Listener) context.Context {
 			ctx = context.WithValue(ctx, "listener", l.Addr().String())
 			return ctx
@@ -143,7 +148,7 @@ ginRouterTwo.GET("/notification-stream", func (ctx *gin.Context) { webSocketHand
 
 	go func() {
 		fmt.Printf("server two listening on port 8080 \n")
-		err := serverTwo.ListenAndServe()
+		err := serverPsql.ListenAndServe()
 		// err := serverTwo.ListenAndServeTLS("server.crt", "server.key")
 		if errors.Is(err, http.ErrServerClosed) {
 			fmt.Printf("server two closed \n")
@@ -165,8 +170,9 @@ type webSocketHandler struct {
 }
 
 
-func (wsh webSocketHandler) NotificationStream (ctx *gin.Context, l *pq.Listener) {
-
+func (wsh webSocketHandler) PsqlNotificationStream (ctx *gin.Context, l *pq.Listener) {
+	// The database notifies the listener when a change takes place.
+	// The listener then sends the notification to the channel.
 	c, err := wsh.upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 
 	if err != nil {
@@ -181,7 +187,7 @@ func (wsh webSocketHandler) NotificationStream (ctx *gin.Context, l *pq.Listener
 
 	i := 1
 
-	// go has a nifty infinite loop syntax, it's just a for loop with no condition
+	// go has a nifty infinite loop syntax, it's just a 'for' loop with no condition
 	for {
 		responseInBytes := database_service.WaitForNotification(l)
 		fmt.Println("response in string: ", string(responseInBytes))
@@ -191,7 +197,6 @@ func (wsh webSocketHandler) NotificationStream (ctx *gin.Context, l *pq.Listener
 			log.Printf("Error %s when sending message to client", err)
 			return
 		}
-		time.Sleep(time.Second)
 
 		i++
 	}

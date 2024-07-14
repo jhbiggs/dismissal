@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bus/src/main/flutter_db_service/flutter_db_service.dart';
+import 'package:flutter_bus/src/main/flutter_objects/event.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../flutter_objects/teacher.dart';
@@ -22,9 +23,7 @@ class _TeacherListViewState extends State<TeacherListView> {
 
   // final _channel = WebSocketChannel.connect(
   //     Uri.parse('ws://dismissalapp.org:8080/notification-stream'));
-  final _channel = WebSocketChannel.connect(
-      Uri.parse("ws://$baseUrl:8080/notification-stream"));
-  // Uri.parse('wss://echo.websocket.events'));
+  final _channel = WebSocketChannel.connect(Uri.parse("ws://$baseUrl:80/ws"));
   void loadTeachers() async {
     items = await fetchTeachers();
 
@@ -42,34 +41,46 @@ class _TeacherListViewState extends State<TeacherListView> {
   void _toggleTeacherArrival(Teacher teacher) {
     setState(() {
       teacher.arrived = !teacher.arrived;
+
+      // Send the updated teacher data to the server
+      final message = jsonEncode(teacher.toJson());
+      _channel.sink.add(jsonEncode(Event("teacher-change", teacher.toJson())));
       // Consider reloading teacher data if necessary
     });
   }
 
+  @override
+  void dispose() {
+    _channel.sink.close();
+    super.dispose();
+  }
+
   Widget _buildTeacherList(AsyncSnapshot snapshot) {
-    // try {
-    //   final parsed = jsonDecode(snapshot.data.toString());
-    //   print(parsed['data']);
-    //   testTeacher = Teacher.fromJson(parsed['data']);
-    //   // Update the items with the new arrival status
-    //   items.firstWhere((element) => element.id == testTeacher.id).arrived =
-    //       testTeacher.arrived;
-    // } on FormatException catch (e) {
-    //   print('Invalid JSON: $e');
-    //   return const Text('Invalid JSON');
-    // }
     if (snapshot.connectionState == ConnectionState.none ||
         snapshot.connectionState == ConnectionState.waiting ||
         snapshot.connectionState == ConnectionState.active) {
-final parsed = jsonDecode(snapshot.data.toString());
-//     final teacher1 = Teacher.fromJson(parsed['data']);
-        print(parsed);
+      final parsed = jsonDecode(snapshot.data.toString());
+      // print("Parsed is: ${parsed}");
+      try {
         if (parsed != null) {
-          final teacher = Teacher.fromJson(parsed['data']);
-          // Update the items with the new arrival status
-          items.firstWhere((element) => element.id == teacher.id).arrived =
-              teacher.arrived;
+          final event = Event.fromJson(jsonDecode(snapshot.data.toString()));
+
+          if (event.messageType == 'teacher-change') {
+            print("message type is teacher-change");
+            final teacher = Teacher.fromJson(event.message);
+            print("Teacher is: ${teacher}");
+            // Update the items with the new arrival status
+            items.firstWhere((element) => element.id == teacher.id).arrived =
+                teacher.arrived;
+          }
         }
+      } on FormatException catch (e) {
+        // TODO
+        print('Error parsing JSON data: $e');
+      } on TypeError catch (e) {
+        // TODO
+        print('Type Error parsing JSON data: $e');
+      }
 
       return ListView(padding: const EdgeInsets.all(16), children: [
         for (var index = 0; index < items.length; index++)
@@ -100,7 +111,6 @@ final parsed = jsonDecode(snapshot.data.toString());
       stream: _channel.stream,
       builder: (context, snapshot) {
         return _buildTeacherList(snapshot);
-        // return Text(snapshot.hasData ? '${snapshot.data}' : '');
       },
     ));
   }

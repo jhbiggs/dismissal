@@ -25,7 +25,7 @@ func WaitForNotification(listener *pq.Listener) []byte  {
 				return prettyJSON.Bytes();
 			// the "<-" operator is a channel receiver
 		case <-time.After(90 * time.Second):
-			fmt.Println("Received no events for 90 seconds, checking connection");
+			fmt.Println("Received no events from database for 90 seconds, checking connection");
 			go func () {
 				listener.Ping();
 			}()

@@ -24,6 +24,7 @@ class _TeacherListViewState extends State<TeacherListView> {
   // final _channel = WebSocketChannel.connect(
   //     Uri.parse('ws://dismissalapp.org:8080/notification-stream'));
   final _channel = WebSocketChannel.connect(Uri.parse("ws://$baseUrl:80/ws"));
+  
   void loadTeachers() async {
     items = await fetchTeachers();
 
@@ -60,7 +61,7 @@ class _TeacherListViewState extends State<TeacherListView> {
         snapshot.connectionState == ConnectionState.waiting ||
         snapshot.connectionState == ConnectionState.active) {
       final parsed = jsonDecode(snapshot.data.toString());
-      // print("Parsed is: ${parsed}");
+      print("Parsed in teacher list view is: ${parsed}");
       try {
         if (parsed != null) {
           final event = Event.fromJson(jsonDecode(snapshot.data.toString()));

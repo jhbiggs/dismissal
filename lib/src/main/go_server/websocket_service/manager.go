@@ -2,57 +2,89 @@ package websocket_service
 
 import (
 	"log"
-	// "net/http"
-	"sync"
+	"net/http"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"sync"
 )
-
-// ClientList is a map used to help manage a map of clients
-type ClientList map[*Client]bool
-
-// Client is a websocket client, aka front-end visitor
-type Client struct {
-	// The websocket connection.
-	connection *websocket.Conn
-
-	// manages the client (i.e. delegates messages)
-	manager *Manager
-
-	// egress is used to avoid concurrent write attempts
-	egress chan []byte
-}
-
-// Initialize a new client
-func NewClient(conn *websocket.Conn, manager *Manager) *Client {
-	return &Client{
-		connection: conn,
-		manager: manager,
-		egress: make(chan []byte),
-	}
-}
 
 var (
 	/** upgrades incoming HTTP requests into a persistent websocket
-	*/
+	 */
 	websocketUpgrader = websocket.Upgrader{
-		ReadBufferSize: 1024,
+		// Apply origin checker
+		// CheckOrigin: checkOrigin,
+		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
 )
+// not sure why this doesn't work
+func checkOrigin(r *http.Request) bool {
+
+	// grab the request origin
+	origin := r.Header.Get("Origin")
+
+	switch origin {
+	case "http://localhost:80":
+			return true
+	default:
+		return false
+	}
+}
+
+// ClientList is a map used to help manage a map of clients
 
 // Manager holds references to all registered clients, broadcasting rules
 type Manager struct {
 	clients ClientList
-	
+
 	// Lock state before editing clients or use channels to block
 	sync.RWMutex
+
+	// handlers are functions to handle events
+	handlers map[string]EventHandler
 }
 
 // Initialize values in manager
 func NewManager() *Manager {
-	return &Manager{
-		clients: make(ClientList),
+	m := &Manager{
+		clients:  make(ClientList),
+		handlers: make(map[string]EventHandler),
+	}
+	m.setupEventHandlers()
+	return m
+}
+
+func (m *Manager) setupEventHandlers() {
+	m.handlers[EventSendMessage] = func(e Event, c *Client) error {
+		fmt.Println("Message received")
+		fmt.Println(e)
+		return nil
+	}
+	m.handlers[EventTeacherChange] = func(e Event, c *Client) error {
+		fmt.Println("Teacher change received")
+		fmt.Println(e)
+		return nil
+	}
+	m.handlers[EventBusChange] = func(e Event, c *Client) error {
+		fmt.Println(e)
+		fmt.Println("Bus change received")
+		fmt.Println(e)
+		return nil
+	}
+}
+
+func (m *Manager) routeEvent(event Event, c *Client) error {
+	// Check if handler is present in Map
+	log.Println("Routing event ", event)
+	if handler, ok := m.handlers[event.MessageType]; ok {
+		if err := handler(event, c); err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return ErrEventNotSupported
 	}
 }
 
@@ -90,7 +122,7 @@ func (m *Manager) addClient(client *Client) {
 }
 
 // clean up the list
-func (m *Manager) removeClient(client *Client){
+func (m *Manager) removeClient(client *Client) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -103,63 +135,3 @@ func (m *Manager) removeClient(client *Client){
 		log.Println("Removed client")
 	}
 }
-
-// goroutine for handling read messages
-func (c *Client) readMessages() {
-	defer func() {
-		// close the function when complete
-		c.manager.removeClient(c)
-	}()
-
-	for {
-		// read the next message in the queue connection
-		messageType, payload, err := c.connection.ReadMessage()
-
-		if err != nil {
-			// if connection is closed there will be an error
-			// only strange errors, no simple disconnection
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway,
-			websocket.CloseAbnormalClosure){
-				log.Printf("error reading message: %v", err)
-			}
-			break
-		}
-		log.Println("MessageType: ", messageType)
-		log.Println("Payload: ", string(payload))
-
-		// hack to test writeMessages
-		// TODO: replace
-		for wsclient := range c.manager.clients {
-			wsclient.egress <- payload
-		}
-	}
-
-}
-
-func (c *Client) writeMessages() {
-	defer func() {
-		// close gracefully if triggered
-		c.manager.removeClient(c)
-	}()
-
-	for {
-		select {
-		case message, ok := <-c.egress:
-			// "ok" will be false in case the egress channel is closed
-			if !ok {
-				// manager closed connection, communicate to front end
-				if err := c.connection.WriteMessage(websocket.CloseMessage, nil); err != nil {
-					log.Println("connection closed: ", err)
-				}
-				// return and close goroutine
-				return
-			}
-			// Send a message on the channel
-			if err := c.connection.WriteMessage(websocket.TextMessage, message); err != nil {
-				log.Println(err)
-			}
-			log.Println("sent message")
-		}
-	}
-}
-

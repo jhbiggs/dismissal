@@ -21,6 +21,15 @@ class Bus {
       throw const FormatException('Invalid or missing data in JSON');
     }
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'busid': id,
+      'busnumber': busNumber,
+      'animal': animal,
+      'arrived': arrived,
+    };
+  }
 }
 
 class Buses {

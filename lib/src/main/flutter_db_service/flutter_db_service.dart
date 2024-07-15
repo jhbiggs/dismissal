@@ -6,7 +6,8 @@ import 'package:http/http.dart' as http;
 
 // const String baseUrl = 'http://ec2-52-201-69-55.compute-1.amazonaws.com:443';
 // const String baseUrl = 'dismissalapp.org';
-const String baseUrl = 'localhost';
+// const String baseUrl = 'localhost';
+const String baseUrl = '192.168.1.14';
 
 Future<List<Bus>> fetchBuses() async {
   final response = await http.get(Uri.parse('http://$baseUrl/buses'));
@@ -31,8 +32,7 @@ Future<List<Bus>> fetchBuses() async {
 }
 
 Future<List<Teacher>> fetchTeachers() async {
-  final response =
-      await http.get(Uri.parse('http://$baseUrl/teachers'));
+  final response = await http.get(Uri.parse('http://$baseUrl/teachers'));
 
   if (response.statusCode == 200) {
     // If the server returns a 200 OK response,
@@ -57,8 +57,7 @@ Future<List<Teacher>> fetchTeachers() async {
 
 Future<http.Response> updateBus(Bus bus) async {
   final response = await http.put(
-    Uri.parse(
-        'http://$baseUrl/buses/${bus.id}/toggleBusArrivalStatus'),
+    Uri.parse('http://$baseUrl/buses/${bus.id}/toggleBusArrivalStatus'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },

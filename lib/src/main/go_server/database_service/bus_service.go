@@ -81,12 +81,19 @@ func GetBuses(ctx *gin.Context) {
 }
 
 func ToggleBusArrivalStatus(ctx *gin.Context) {
-	fmt.Println("updateBusStatus called")
+	fmt.Println("ToggleBusArrivalSTatus called")
 
 	busid := ctx.Param("id")
 	_, err := DB.Exec("UPDATE dismissal_schema.buses SET arrived = NOT arrived WHERE busid = $1", busid)
 
 	if err != nil {
 		panic(err)
+	}
+}
+
+func UpdateBus (bus *go_objects.Bus){
+	_, err := DB.Exec("UPDATE dismissal_schema.buses SET arrived = $1 WHERE busid = $2", bus.Arrived, bus.BusID)
+	if err != nil {
+		fmt.Println("Error updating the buses table: ", err)
 	}
 }

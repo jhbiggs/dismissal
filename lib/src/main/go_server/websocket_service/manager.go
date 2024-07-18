@@ -3,10 +3,15 @@ package websocket_service
 import (
 	"log"
 	"net/http"
-	"fmt"
+	"sync"
+
+	// "dismissal.com/m/v2/database_service"
+	"encoding/json"
+
+	"dismissal.com/m/v2/database_service"
+	"dismissal.com/m/v2/go_objects"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"sync"
 )
 
 var (
@@ -51,26 +56,36 @@ func NewManager() *Manager {
 	m := &Manager{
 		clients:  make(ClientList),
 		handlers: make(map[string]EventHandler),
+		
 	}
 	m.setupEventHandlers()
 	return m
 }
 
 func (m *Manager) setupEventHandlers() {
-	m.handlers[EventSendMessage] = func(e Event, c *Client) error {
-		fmt.Println("Message received")
-		fmt.Println(e)
-		return nil
-	}
+
 	m.handlers[EventTeacherChange] = func(e Event, c *Client) error {
-		fmt.Println("Teacher change received")
-		fmt.Println(e)
+		// take payload from event and create a teacher object
+		teacher := &go_objects.Teacher{}
+		err := json.Unmarshal([]byte(e.Payload), teacher)
+		if err != nil {
+			return err
+		}
+
+		// update postgres database with teacher change information
+		database_service.UpdateTeacher(teacher)
 		return nil
 	}
 	m.handlers[EventBusChange] = func(e Event, c *Client) error {
-		fmt.Println(e)
-		fmt.Println("Bus change received")
-		fmt.Println(e)
+		bus := &go_objects.Bus{}
+		err := json.Unmarshal([]byte (e.Payload), bus)
+
+		if err != nil {
+			return err
+		}
+
+		database_service.UpdateBus(bus)
+
 		return nil
 	}
 }
@@ -78,7 +93,9 @@ func (m *Manager) setupEventHandlers() {
 func (m *Manager) routeEvent(event Event, c *Client) error {
 	// Check if handler is present in Map
 	log.Println("Routing event ", event)
+	// check if the event type is supported
 	if handler, ok := m.handlers[event.MessageType]; ok {
+		// call the handler
 		if err := handler(event, c); err != nil {
 			return err
 		}

@@ -2,8 +2,9 @@ package database_service
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 
 	"dismissal.com/m/v2/go_objects"
 )
@@ -49,11 +50,22 @@ func ToggleTeacherArrivalStatus(ctx *gin.Context){
 	teacherID := ctx.Param("teacher_id")
 	fmt.Println("ToggleTeacherArrivalStatus called with teacherID: ", teacherID)
 
-	_, err := DB.Exec("UPDATE dismissal_schema.teachers SET arrived = NOT arrived WHERE teacherid = $1", teacherID)
+	result, err := DB.Exec("UPDATE dismissal_schema.teachers SET arrived = NOT arrived WHERE teacherid = $1", teacherID)
+	fmt.Println("Result is: ", result)
 	if err != nil {
 		fmt.Println("Error updating the database: ", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Teacher arrival status updated successfully"})
+}
+
+func UpdateTeacher(teacher *go_objects.Teacher) {
+	fmt.Println("UpdateTeacher called")
+	fmt.Printf("Teacher: %+v\n", teacher)
+	result, err := DB.Exec("UPDATE dismissal_schema.teachers SET arrived = $1 WHERE teacherid = $2", teacher.Arrived, teacher.TeacherID)
+	fmt.Println("result in updateTeacher is: ", result)
+	if err != nil {
+		fmt.Println("Error updating the teachers table: ", err)
+	}
 }

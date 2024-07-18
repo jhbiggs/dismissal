@@ -61,7 +61,7 @@ func (c *Client) readMessages() {
 
 	for {
 		// read the next message in the queue connection
-		messageType , payload, err := c.connection.ReadMessage()
+		_ , payload, err := c.connection.ReadMessage()
 
 		if err != nil {
 			// if connection is closed there will be an error
@@ -72,14 +72,18 @@ func (c *Client) readMessages() {
 			}
 			break
 		}
-		log.Println("MessageType: ", messageType)
 		log.Println("Payload: ", string(payload))
-		var request Event
-		if err := json.Unmarshal(payload, &request); err != nil {
-			log.Printf("err unmarshalling message: %v", err)
-		}
+		var event Event
+		if err := json.Unmarshal(payload, &event); err != nil {
+			log.Printf("error unmarshalling message: %v", err)
+		} 
+		// var request Event
+		// if err := json.Unmarshal(payload, &request); err != nil {
+		// 	log.Printf("err unmarshalling message: %v", err)
+		// }
+		// log.Printf("unmarshalled message: %v", request)
 		// route the event
-		if err := c.manager.routeEvent(request, c); err != nil {
+		if err := c.manager.routeEvent(event, c); err != nil {
 			log.Println("error routing event: ", err)
 		}
 
@@ -90,7 +94,6 @@ func (c *Client) readMessages() {
 // pongHandler handles pong messages for the client
 func (c *Client) pongHandler(pongMsg string) error {
 	// current time  + pong wait time
-	log.Println("pong")
 	return c.connection.SetReadDeadline(time.Now().Add(pongWait))
 }
 
@@ -127,7 +130,6 @@ func (c *Client) writeMessages() {
 			}
 			log.Println("sent message")
 		case <-ticker.C:
-			log.Println("ping")
 			// Send the ping
 			if err := c.connection.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				log.Println("Write message in ping error: ", err)

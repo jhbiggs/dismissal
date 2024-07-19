@@ -66,7 +66,6 @@ class _BusListViewState extends State<BusListView> {
         snapshot.connectionState == ConnectionState.waiting ||
         snapshot.connectionState == ConnectionState.active) {
       final parsed = jsonDecode(snapshot.data.toString());
-              print("Parsed in bus list view is: $parsed");
 
       try {
         // if the parsed data is not null, then create an event object

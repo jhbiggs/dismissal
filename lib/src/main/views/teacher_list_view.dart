@@ -61,7 +61,6 @@ class _TeacherListViewState extends State<TeacherListView> {
         snapshot.connectionState == ConnectionState.waiting ||
         snapshot.connectionState == ConnectionState.active) {
       final parsed = jsonDecode(snapshot.data.toString());
-      print("Parsed in teacher list view is: ${parsed}");
       try {
         if (parsed != null) {
           final event = Event.fromJson(jsonDecode(snapshot.data.toString()));

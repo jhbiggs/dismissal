@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"fmt"
 
 	// "dismissal.com/m/v2/database_service"
 	"encoding/json"
@@ -72,6 +73,16 @@ func (m *Manager) setupEventHandlers() {
 			return err
 		}
 
+		data, err := json.Marshal(teacher)
+
+		var outgoing Event
+		outgoing.Payload = data
+		outgoing.MessageType = EventTeacherChange
+
+		for client := range c.manager.clients{
+			client.egress <- outgoing
+		}
+
 		// update postgres database with teacher change information
 		database_service.UpdateTeacher(teacher)
 		return nil
@@ -79,9 +90,22 @@ func (m *Manager) setupEventHandlers() {
 	m.handlers[EventBusChange] = func(e Event, c *Client) error {
 		bus := &go_objects.Bus{}
 		err := json.Unmarshal([]byte (e.Payload), bus)
-
 		if err != nil {
 			return err
+		}
+
+		data, err := json.Marshal(bus)
+		if err != nil {
+			return fmt.Errorf("failed to marshal broadcast message: %v", err)
+		}
+
+		// Place payload into an Event
+		var outgoing Event 
+		outgoing.Payload = data
+		outgoing.MessageType = EventBusChange
+
+		for client := range c.manager.clients {
+			client.egress <- outgoing
 		}
 
 		database_service.UpdateBus(bus)
@@ -91,8 +115,7 @@ func (m *Manager) setupEventHandlers() {
 }
 
 func (m *Manager) routeEvent(event Event, c *Client) error {
-	// Check if handler is present in Map
-	log.Println("Routing event ", event)
+	
 	// check if the event type is supported
 	if handler, ok := m.handlers[event.MessageType]; ok {
 		// call the handler
